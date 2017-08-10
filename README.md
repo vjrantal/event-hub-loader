@@ -2,6 +2,10 @@
 
 This repository contains scripts to generate load against an Azure Event Hub and to create all necessary resources. The load is generated with wrk running within Azure Container Instances.
 
+You can take a look at the [CI configuration file](.travis.yml) to see how to setup and install the dependencies in the CI.
+
+[![Build Status](https://travis-ci.org/vjrantal/event-hub-loader.svg?branch=master)](https://travis-ci.org/vjrantal/event-hub-loader)
+
 # Running locally
 
 ## Prerequisites
