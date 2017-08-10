@@ -37,17 +37,8 @@ export WRK_OPTIONS="-t 1 -d 600s -c 50"
 ./run.sh
 ```
 
-Observe the output that prints the Incoming Messages metric from the Event Hub created. In a success case, one should be able to see a non-zero value in the total property like in the sample output below:
+Observe the output that prints the Incoming Messages metric from the Event Hub created. In a success case, one should be able to see a an output like below that informs about more than zero incoming messages:
 
 ```
-    "data": [
-      {
-        "average": null,
-        "count": null,
-        "maximum": null,
-        "minimum": null,
-        "timeStamp": "2017-07-11T07:36:00+00:00",
-        "total": 504874.0
-      }
-    ]
+The Event Hub currently has 504874.0 incoming messages
 ```

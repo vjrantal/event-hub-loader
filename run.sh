@@ -46,7 +46,12 @@ done
 echo "Sleeping for ${SLEEP_IN_SECONDS} seconds..."
 sleep $SLEEP_IN_SECONDS
 
-az monitor metrics list --resource $EVENT_HUB_ID --metric-names EHINMSGS --time-grain P1M
+METRICS_OUTPUT=$(az monitor metrics list --resource $EVENT_HUB_ID --metric-names EHINMSGS --time-grain P1M)
+echo $(echo $METRICS_OUTPUT | python -c '
+import sys, json
+output = json.load(sys.stdin)
+print "The Event Hub currently has %s incoming messages" % (output[0]["data"][0]["total"])
+')
 
 echo "Removing the Container Instances..."
 
