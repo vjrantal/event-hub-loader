@@ -2,9 +2,11 @@
 
 This repository contains scripts to generate load against an Azure Event Hub and to create all necessary resources. The load is generated with wrk running within Azure Container Instances.
 
-You can take a look at the [CI configuration file](.travis.yml) to see how to setup and install the dependencies in the CI.
+You can take a look at the [CI configuration file](.travis.yml) to see how to setup and install the dependencies in the CI. The latest CI build output can be seen by clicking the badge below:
 
 [![Build Status](https://travis-ci.org/vjrantal/event-hub-loader.svg?branch=master)](https://travis-ci.org/vjrantal/event-hub-loader)
+
+For more details and some background information about this project, see the blog post at [https://blog.vjrantal.net/2017/08/10/load-testing-with-azure-container-instances-and-wrk/](https://blog.vjrantal.net/2017/08/10/load-testing-with-azure-container-instances-and-wrk/).
 
 # Running locally
 
