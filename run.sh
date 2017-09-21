@@ -45,7 +45,7 @@ echo "Creating the Container Instances..."
 
 COUNTER=1
 while [ $COUNTER -le $CONTAINER_COUNT ]; do
-  az container create -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --image "$IMAGE" -e SCRIPT_URL="$WRK_SCRIPT_URL" TARGET_URL="$TARGET_URL" WRK_OPTIONS="$WRK_OPTIONS" WRK_HEADER="$WRK_HEADER" > /dev/null 2>&1
+  az container create -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --image "$IMAGE" -e SCRIPT_URL="$WRK_SCRIPT_URL" TARGET_URL="$TARGET_URL" WRK_OPTIONS="$WRK_OPTIONS" WRK_HEADER="$WRK_HEADER" > /dev/null
   let COUNTER=COUNTER+1
 done
 
@@ -63,7 +63,7 @@ echo "Removing the Container Instances..."
 
 COUNTER=1
 while [ $COUNTER -le $CONTAINER_COUNT ]; do
-  az container delete -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --yes > /dev/null 2>&1
+  az container delete -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --yes > /dev/null
   let COUNTER=COUNTER+1
 done
 
