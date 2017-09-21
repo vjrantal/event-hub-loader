@@ -2,8 +2,10 @@ language: python
 python:
 - '2.7'
 before_install:
-- sudo apt-get -qq update
-- sudo apt-get install -y azure-cli
+- echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+- sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
+- sudo apt-get install -y apt-transport-https
+- sudo apt-get update && sudo apt-get install -y azure-cli
 install:
 - npm install
 - az login --service-principal -u $AZ_USER --password $AZ_PASSWORD --tenant $AZ_TENANT > /dev/null 2>&1
