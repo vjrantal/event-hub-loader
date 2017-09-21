@@ -26,7 +26,7 @@ export RESOURCE_GROUP=Travis
 export WRK_SCRIPT_URL=https://gist.githubusercontent.com/vjrantal/113fa910444130d2d6431cdc84e6f80e/raw/0f67559a620647d6842c579b362a139a6b338cb1/script.lua
 ```
 
-In above, the script URL can point to your custom script, but remebember to set `wrk.method = "POST"` in that script since Event Hub accepts only the POST method.
+In above, the script URL can point to your custom script, but do set `wrk.method = "POST"` in that script since Event Hub accepts only the POST method.
 
 ### Optional
 
@@ -35,6 +35,7 @@ export CONTAINER_COUNT=8
 export PARTITION_COUNT=8
 export SLEEP_IN_SECONDS=300
 export WRK_OPTIONS="-t 1 -d 600s -c 50"
+export KEEP_EVENT_HUB=1
 ```
 
 ## Run

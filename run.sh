@@ -5,6 +5,12 @@ set -o pipefail
 
 echo "Creating the Event Hub..."
 
+if [ $KEEP_EVENT_HUB ]; then
+  KEEP_EVENT_HUB=true
+else
+  KEEP_EVENT_HUB=false
+fi
+
 PARTITION_COUNT=${PARTITION_COUNT:=8}
 NAMESPACE_NAME=$(date +%s | shasum | base64 | head -c 16)
 CREATE_OUTPUT=$(az group deployment create --resource-group $RESOURCE_GROUP --template-file azuredeploy.json --parameters namespaceName=$NAMESPACE_NAME partitionCount=$PARTITION_COUNT)
@@ -61,6 +67,9 @@ while [ $COUNTER -le $CONTAINER_COUNT ]; do
   let COUNTER=COUNTER+1
 done
 
-echo "Removing the Event Hub..."
-
-az resource delete --id $EVENT_HUB_ID
+if [ "$KEEP_EVENT_HUB" = true ]; then
+  echo "The Event Hub was not removed..."
+else
+  echo "Removing the Event Hub..."
+  az resource delete --id $EVENT_HUB_ID
+fi
