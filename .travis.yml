@@ -1,8 +1,10 @@
 language: python
 python:
 - '2.7'
+before_install:
+- sudo apt-get -qq update
+- sudo apt-get install -y azure-cli
 install:
-- pip install --pre azure-cli --extra-index-url https://azureclinightly.blob.core.windows.net/packages
 - npm install
 - az login --service-principal -u $AZ_USER --password $AZ_PASSWORD --tenant $AZ_TENANT > /dev/null 2>&1
 script:
