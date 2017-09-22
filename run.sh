@@ -71,5 +71,7 @@ if [ "$KEEP_EVENT_HUB" = true ]; then
   echo "The Event Hub was not removed..."
 else
   echo "Removing the Event Hub..."
-  az resource delete --id $EVENT_HUB_ID
+  # Ignore the return value of above command, because sometimes error value is
+  # returned even when the resource deletion succeeds.
+  az resource delete --id $EVENT_HUB_ID || true
 fi
