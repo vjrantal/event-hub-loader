@@ -3,29 +3,33 @@
 set -e
 set -o pipefail
 
-echo "Creating the Event Hub..."
-
 if [ $KEEP_EVENT_HUB ]; then
   KEEP_EVENT_HUB=true
 else
   KEEP_EVENT_HUB=false
 fi
 
-PARTITION_COUNT=${PARTITION_COUNT:=8}
-NAMESPACE_NAME=$(date +%s | shasum | base64 | head -c 16)
-CREATE_OUTPUT=$(az group deployment create --resource-group $RESOURCE_GROUP --template-file azuredeploy.json --parameters namespaceName=$NAMESPACE_NAME partitionCount=$PARTITION_COUNT)
+if [ $EXISTING_EVENT_HUB ]; then
+  KEEP_EVENT_HUB=true
+  export EVENT_HUB_CONNECTION=$EXISTING_EVENT_HUB
+else
+  echo "Creating the Event Hub..."
+  PARTITION_COUNT=${PARTITION_COUNT:=8}
+  NAMESPACE_NAME=$(date +%s | shasum | base64 | head -c 16)
+  CREATE_OUTPUT=$(az group deployment create --resource-group $RESOURCE_GROUP --template-file azuredeploy.json --parameters namespaceName=$NAMESPACE_NAME partitionCount=$PARTITION_COUNT)
 
-export EVENT_HUB_CONNECTION=$(echo $CREATE_OUTPUT | python -c '
+  export EVENT_HUB_CONNECTION=$(echo $CREATE_OUTPUT | python -c '
 import sys, json
 output = json.load(sys.stdin)
 print output["properties"]["outputs"]["connectionString"]["value"]
 ')
 
-export EVENT_HUB_ID=$(export NAMESPACE_NAME=$NAMESPACE_NAME; echo $CREATE_OUTPUT | python -c '
+  export EVENT_HUB_ID=$(export NAMESPACE_NAME=$NAMESPACE_NAME; echo $CREATE_OUTPUT | python -c '
 import sys, json, os
 output = json.load(sys.stdin)
 print "%s/providers/Microsoft.EventHub/namespaces/%s" % ("/".join(output["id"].split("/")[:5]), os.environ["NAMESPACE_NAME"])
 ')
+fi
 
 TARGET_URL=$(node -e "require('./index.js').printUrl()")
 
@@ -52,12 +56,14 @@ done
 echo "Sleeping for ${SLEEP_IN_SECONDS} seconds..."
 sleep $SLEEP_IN_SECONDS
 
-METRICS_OUTPUT=$(az monitor metrics list --resource $EVENT_HUB_ID --metric-names EHINMSGS --time-grain P1M)
-echo $(echo $METRICS_OUTPUT | python -c '
+if [ $EVENT_HUB_ID ]; then
+  METRICS_OUTPUT=$(az monitor metrics list --resource $EVENT_HUB_ID --metric-names EHINMSGS --time-grain P1M)
+  echo $(echo $METRICS_OUTPUT | python -c '
 import sys, json
 output = json.load(sys.stdin)
 print "The Event Hub currently has %s incoming messages" % (output[0]["data"][0]["total"])
 ')
+fi
 
 echo "Removing the Container Instances..."
 
