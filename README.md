@@ -35,7 +35,8 @@ export CONTAINER_COUNT=8
 export PARTITION_COUNT=8
 export SLEEP_IN_SECONDS=300
 export WRK_OPTIONS="-t 1 -d 600s -c 50"
-export KEEP_EVENT_HUB=1
+export KEEP_EVENT_HUB=true
+export PRINT_METRICS=true
 ```
 
 ## Run
@@ -44,7 +45,7 @@ export KEEP_EVENT_HUB=1
 ./run.sh
 ```
 
-Observe the output that prints the Incoming Messages metric from the Event Hub created. In a success case, one should be able to see a an output like below that informs about more than zero incoming messages:
+If you have set `PRINT_METRICS=true`, you can observe the output that prints the Incoming Messages metric from the Event Hub created. In a success case, one should be able to see a an output like below that informs about more than zero incoming messages:
 
 ```
 The Event Hub currently has 504874.0 incoming messages
