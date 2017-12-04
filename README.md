@@ -1,6 +1,8 @@
 # Introduction
 
-This repository contains scripts to generate load against an Azure Event Hub and to create all necessary resources. The load is generated with wrk running within Azure Container Instances.
+This repository contains scripts to generate load against an Azure Event Hub and to create all necessary resources. The load is generated with wrk running within Azure Container Instances (ACI).
+
+It was tested that with 20 ACI and with 2KB payload, it was possible to ingest 42572 messages per second. In terms of data, this means approximately 85 MB/s when the maximum allowed by the 100 Throughput Units would have been 100 MB/s.
 
 You can take a look at the [CI configuration file](.travis.yml) to see how to setup and install the dependencies in the CI. The latest CI build output can be seen by clicking the badge below:
 
