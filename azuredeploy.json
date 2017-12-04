@@ -29,6 +29,13 @@
         "description": "Maximum throughput units for auto-inflate"
       }
     },
+    "capacityThroughputUnits": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Throughput units capacity"
+      }
+    },
     "consumerGroupName1": {
       "type": "string",
       "defaultValue": "group1",
@@ -57,7 +64,8 @@
       "location": "[variables('location')]",
       "sku": {
         "name": "Standard",
-        "tier": "Standard"
+        "tier": "Standard",
+        "capacity": "[parameters('capacityThroughputUnits')]"
       },
       "properties": {
         "isAutoInflateEnabled": true,
