@@ -13,7 +13,7 @@ else
   echo "Creating the Event Hub..."
   PARTITION_COUNT=${PARTITION_COUNT:=8}
   NAMESPACE_NAME=$(date +%s | shasum | base64 | head -c 16)
-  CREATE_OUTPUT=$(az group deployment create --resource-group $RESOURCE_GROUP --template-file azuredeploy.json --name $NAMESPACE_NAME --parameters namespaceName=$NAMESPACE_NAME partitionCount=$PARTITION_COUNT)
+  CREATE_OUTPUT=$(az group deployment create --output json --resource-group $RESOURCE_GROUP --template-file azuredeploy.json --name $NAMESPACE_NAME --parameters namespaceName=$NAMESPACE_NAME partitionCount=$PARTITION_COUNT)
 
   export EVENT_HUB_CONNECTION=$(echo $CREATE_OUTPUT | python -c '
 import sys, json
@@ -46,19 +46,20 @@ echo "Creating the Container Instances..."
 
 COUNTER=1
 while [ $COUNTER -le $CONTAINER_COUNT ]; do
-  az container create -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --image "$IMAGE" -e SCRIPT_URL="$WRK_SCRIPT_URL" TARGET_URL="$TARGET_URL" WRK_OPTIONS="$WRK_OPTIONS" WRK_HEADER="$WRK_HEADER" > /dev/null
+  az container create --output json -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --image "$IMAGE" -e SCRIPT_URL="$WRK_SCRIPT_URL" TARGET_URL="$TARGET_URL" WRK_OPTIONS="$WRK_OPTIONS" WRK_HEADER="$WRK_HEADER" > /dev/null
   let COUNTER=COUNTER+1
 done
 
 echo "Sleeping for ${SLEEP_IN_SECONDS} seconds..."
 sleep $SLEEP_IN_SECONDS
 
+# for metrics, if you reused an existing event hub by exporting EXISTING_EVENT_HUB, please also export the corresponding EVENT_HUB_ID (format: /subscriptions/.../resourceGroups/.../providers/Microsoft.EventHub/namespaces/...)
 if [[ $EVENT_HUB_ID && "$PRINT_METRICS" != true && "$KEEP_EVENT_HUB" = true ]]; then
-  echo -e "Get metrics with the following command:\naz monitor metrics list --resource $EVENT_HUB_ID --metric-names IncomingMessages --time-grain P1M"
+  echo -e "Get metrics with the following command:\naz monitor metrics list --output json --resource $EVENT_HUB_ID --metric incomingMessages --interval P1D"
 fi
 
 if [[ $EVENT_HUB_ID && "$PRINT_METRICS" = true ]]; then
-  METRICS_OUTPUT=$(az monitor metrics list --resource $EVENT_HUB_ID --metric-names IncomingMessages --time-grain P1M)
+  METRICS_OUTPUT=$(az monitor metrics list --output json --resource $EVENT_HUB_ID --metric incomingMessages --interval P1D)
   echo $(echo $METRICS_OUTPUT | python -c '
 import sys, json
 output = json.load(sys.stdin)
