@@ -14,7 +14,8 @@ For more details and some background information about this project, see the blo
 
 ## Prerequisites
 
-* Run `sudo apt-get install -y jq` to install [jq](https://stedolan.github.io/jq/) required by the bash script
+* Install [jq](https://stedolan.github.io/jq/download/). It is required by the bash script for JSON parsing
+* Install [OpenSSL](https://www.openssl.org/source/) and make sure `openssl` binary can be found from $PATH
 * Install the [azure-cli](https://github.com/Azure/azure-cli) and make sure the `az` binary can be found from $PATH
 * Login with `az login`
 * Create a resource group for the resources the scripts create with `az group create --name Travis --location "West Europe"`

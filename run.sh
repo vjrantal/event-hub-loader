@@ -41,8 +41,8 @@ EVENT_HUB_SHARED_ACCESS_KEY_NAME=$(echo $(echo $EVENT_HUB_CONNECTION | cut -d";"
 EVENT_HUB_SHARED_ACCESS_KEY=$(echo $EVENT_HUB_CONNECTION | cut -d";" -f3)
 EVENT_HUB_SHARED_ACCESS_KEY=${EVENT_HUB_SHARED_ACCESS_KEY#SharedAccessKey=}
 
-# generate SAS token using remote helper code, by default token expires 24 hours from now
-wget -O /tmp/get-sas-token.sh -q https://gist.githubusercontent.com/syedhassaanahmed/bf05bbff8d9696fb978c586881dda61f/raw/42e5bbf7ef75cb3f44b82b6b95dc77303f7e23d0/get-sas-token.sh && source /tmp/get-sas-token.sh && rm -f /tmp/get-sas-token.sh
+# generate SAS token, by default token expires 24 hours from now
+source get-sas-token.sh
 WRK_HEADER="Authorization: $(get_sas_token $TARGET_URL $EVENT_HUB_SHARED_ACCESS_KEY_NAME $EVENT_HUB_SHARED_ACCESS_KEY)"
 
 echo "Creating the Container Instances..."
