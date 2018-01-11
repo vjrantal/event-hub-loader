@@ -6,6 +6,7 @@ before_install:
 - sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
 - sudo apt-get install -y apt-transport-https
 - sudo apt-get update && sudo apt-get install -y azure-cli
+- sudo apt-get install jq
 install:
 - az login --service-principal -u $AZ_USER --password $AZ_PASSWORD --tenant $AZ_TENANT > /dev/null 2>&1
 script:
