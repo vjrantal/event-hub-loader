@@ -42,9 +42,7 @@ EVENT_HUB_SHARED_ACCESS_KEY=$(echo $EVENT_HUB_CONNECTION | cut -d";" -f3)
 EVENT_HUB_SHARED_ACCESS_KEY=${EVENT_HUB_SHARED_ACCESS_KEY#SharedAccessKey=}
 
 # generate SAS token, by default token expires 24 hours from now
-source get-sas-token.sh
-WRK_HEADER="Authorization: $(get_sas_token $TARGET_URL $EVENT_HUB_SHARED_ACCESS_KEY_NAME $EVENT_HUB_SHARED_ACCESS_KEY)"
-
+WRK_HEADER="Authorization: $(python get_sas_token.py $TARGET_URL $EVENT_HUB_SHARED_ACCESS_KEY_NAME $EVENT_HUB_SHARED_ACCESS_KEY)"
 echo "Creating the Container Instances..."
 
 COUNTER=1
