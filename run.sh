@@ -8,27 +8,22 @@ PRINT_METRICS=${PRINT_METRICS:=false}
 
 if [ $EXISTING_EVENT_HUB ]; then
   KEEP_EVENT_HUB=true
-  export EVENT_HUB_CONNECTION=$EXISTING_EVENT_HUB
+  EVENT_HUB_CONNECTION=$EXISTING_EVENT_HUB
 else
   echo "Creating the Event Hub..."
   PARTITION_COUNT=${PARTITION_COUNT:=8}
   NAMESPACE_NAME=$(date +%s | shasum | base64 | head -c 16)
   CREATE_OUTPUT=$(az group deployment create --output json --resource-group $RESOURCE_GROUP --template-file azuredeploy.json --name $NAMESPACE_NAME --parameters namespaceName=$NAMESPACE_NAME partitionCount=$PARTITION_COUNT)
 
-  export EVENT_HUB_CONNECTION=$(echo $CREATE_OUTPUT | python -c '
-import sys, json
-output = json.load(sys.stdin)
-print output["properties"]["outputs"]["connectionString"]["value"]
-')
+  EVENT_HUB_CONNECTION=$(echo $CREATE_OUTPUT | jq -r ".properties.outputs.connectionString.value")
 
-  export EVENT_HUB_ID=$(export NAMESPACE_NAME=$NAMESPACE_NAME; echo $CREATE_OUTPUT | python -c '
-import sys, json, os
-output = json.load(sys.stdin)
-print "%s/providers/Microsoft.EventHub/namespaces/%s" % ("/".join(output["id"].split("/")[:5]), os.environ["NAMESPACE_NAME"])
-')
+  EVENT_HUB_ID=$(echo $CREATE_OUTPUT | jq -r ".id")
+  EVENT_HUB_ID="${EVENT_HUB_ID/Microsoft.Resources\/deployments/Microsoft.EventHub\/namespaces}"
 fi
 
-TARGET_URL=$(node -e "require('./index.js').printUrl()")
+EVENT_HUB_HOST=$(echo $(echo $EVENT_HUB_CONNECTION | cut -d";" -f1) | cut -d"/" -f3)
+EVENT_HUB_PATH=$(echo $(echo $EVENT_HUB_CONNECTION | cut -d";" -f4) | cut -d"=" -f2)
+TARGET_URL=https://$EVENT_HUB_HOST/$EVENT_HUB_PATH/messages
 
 IMAGE="vjrantal/wrk-with-online-script"
 CONTAINER_PREFIX=$(date +%s)
@@ -40,8 +35,14 @@ SLEEP_IN_SECONDS=${SLEEP_IN_SECONDS:=300}
 # so that the test takes at least as long as the time we
 # keep the container alive
 WRK_OPTIONS=${WRK_OPTIONS:="-d $((SLEEP_IN_SECONDS*2))"}
-WRK_HEADER=$(node -e "require('./index.js').printHeader()")
 
+EVENT_HUB_SHARED_ACCESS_KEY_NAME=$(echo $(echo $EVENT_HUB_CONNECTION | cut -d";" -f2) | cut -d"=" -f2)
+
+EVENT_HUB_SHARED_ACCESS_KEY=$(echo $EVENT_HUB_CONNECTION | cut -d";" -f3)
+EVENT_HUB_SHARED_ACCESS_KEY=${EVENT_HUB_SHARED_ACCESS_KEY#SharedAccessKey=}
+
+# generate SAS token, by default token expires 24 hours from now
+WRK_HEADER="Authorization: $(python get_sas_token.py $TARGET_URL $EVENT_HUB_SHARED_ACCESS_KEY_NAME $EVENT_HUB_SHARED_ACCESS_KEY)"
 echo "Creating the Container Instances..."
 
 COUNTER=1
@@ -60,11 +61,8 @@ fi
 
 if [[ $EVENT_HUB_ID && "$PRINT_METRICS" = true ]]; then
   METRICS_OUTPUT=$(az monitor metrics list --output json --resource $EVENT_HUB_ID --metric incomingMessages --interval P1D)
-  echo $(echo $METRICS_OUTPUT | python -c '
-import sys, json
-output = json.load(sys.stdin)
-print "The Event Hub currently has %s incoming messages" % (output[0]["data"][1]["total"])
-')
+  TOTAL_MESSAGES=$(echo $METRICS_OUTPUT | jq -r ".value[0].timeseries[0].data[0].total")
+  echo "The Event Hub currently has $TOTAL_MESSAGES incoming messages"
 fi
 
 echo "Removing the Container Instances..."
