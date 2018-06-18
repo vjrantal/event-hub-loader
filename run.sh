@@ -4,7 +4,7 @@ set -e
 set -o pipefail
 
 KEEP_EVENT_HUB=${KEEP_EVENT_HUB:=false}
-PRINT_METRICS=${PRINT_METRICS:=false}
+PRINT_METRICS=${PRINT_METRICS:=true}
 
 EVENT_HUB_NAME=hubname
 
