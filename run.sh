@@ -6,25 +6,26 @@ set -o pipefail
 KEEP_EVENT_HUB=${KEEP_EVENT_HUB:=false}
 PRINT_METRICS=${PRINT_METRICS:=false}
 
-if [ $EXISTING_EVENT_HUB ]; then
+EVENT_HUB_NAME=hubname
+
+if [ $EXISTING_EVENT_HUB_NAMESPACE ]; then
   KEEP_EVENT_HUB=true
-  EVENT_HUB_CONNECTION=$EXISTING_EVENT_HUB
+  NAMESPACE_NAME=$EXISTING_EVENT_HUB_NAMESPACE
+
+  EVENT_HUB_HOST=$(az eventhubs namespace show -g $RESOURCE_GROUP -n $NAMESPACE_NAME --query "serviceBusEndpoint" -o tsv)
 else
   echo "Creating the Event Hub..."
-  PARTITION_COUNT=${PARTITION_COUNT:=8}
+  
   NAMESPACE_NAME=$(date +%s | shasum | base64 | head -c 16)
-  CREATE_OUTPUT=$(az group deployment create --output json --resource-group $RESOURCE_GROUP --template-file azuredeploy.json --name $NAMESPACE_NAME --parameters namespaceName=$NAMESPACE_NAME partitionCount=$PARTITION_COUNT)
-
-  EVENT_HUB_CONNECTION=$(echo $CREATE_OUTPUT | jq -r ".properties.outputs.connectionString.value")
-
-  EVENT_HUB_ID=$(echo $CREATE_OUTPUT | jq -r ".id")
-  EVENT_HUB_ID="${EVENT_HUB_ID/Microsoft.Resources\/deployments/Microsoft.EventHub\/namespaces}"
+  MIN_THROUGHPUT_UNITS=1
+  MAX_THROUGHPUT_UNITS=20
+  EVENT_HUB_HOST=$(az eventhubs namespace create -g $RESOURCE_GROUP -n $NAMESPACE_NAME --enable-auto-inflate --capacity $MIN_THROUGHPUT_UNITS --maximum-throughput-units $MAX_THROUGHPUT_UNITS --query "serviceBusEndpoint" -o tsv)
+  
+  PARTITION_COUNT=${PARTITION_COUNT:=8}
+  az eventhubs eventhub create -g $RESOURCE_GROUP --namespace-name $NAMESPACE_NAME -n $EVENT_HUB_NAME --partition-count $PARTITION_COUNT > /dev/null
 fi
 
-EVENT_HUB_HOST=$(echo $(echo $EVENT_HUB_CONNECTION | cut -d";" -f1) | cut -d"/" -f3)
-EVENT_HUB_PATH=$(echo $(echo $EVENT_HUB_CONNECTION | cut -d";" -f4) | cut -d"=" -f2)
-TARGET_URL=https://$EVENT_HUB_HOST/$EVENT_HUB_PATH/messages
-
+TARGET_URL=$EVENT_HUB_HOST$EVENT_HUB_NAME/messages
 IMAGE="vjrantal/wrk-with-online-script"
 CONTAINER_PREFIX=$(date +%s)
 CONTAINER_COUNT=${CONTAINER_COUNT:=8}
@@ -36,10 +37,8 @@ SLEEP_IN_SECONDS=${SLEEP_IN_SECONDS:=300}
 # keep the container alive
 WRK_OPTIONS=${WRK_OPTIONS:="-d $((SLEEP_IN_SECONDS*2))"}
 
-EVENT_HUB_SHARED_ACCESS_KEY_NAME=$(echo $(echo $EVENT_HUB_CONNECTION | cut -d";" -f2) | cut -d"=" -f2)
-
-EVENT_HUB_SHARED_ACCESS_KEY=$(echo $EVENT_HUB_CONNECTION | cut -d";" -f3)
-EVENT_HUB_SHARED_ACCESS_KEY=${EVENT_HUB_SHARED_ACCESS_KEY#SharedAccessKey=}
+EVENT_HUB_SHARED_ACCESS_KEY_NAME=$(az eventhubs namespace authorization-rule list -g $RESOURCE_GROUP --namespace-name $NAMESPACE_NAME --query "[0].name" -o tsv)
+EVENT_HUB_SHARED_ACCESS_KEY=$(az eventhubs namespace authorization-rule keys list -g $RESOURCE_GROUP --namespace-name $NAMESPACE_NAME -n $EVENT_HUB_SHARED_ACCESS_KEY_NAME --query "primaryKey" -o tsv)
 
 # generate SAS token, by default token expires 24 hours from now
 WRK_HEADER="Authorization: $(python get_sas_token.py $TARGET_URL $EVENT_HUB_SHARED_ACCESS_KEY_NAME $EVENT_HUB_SHARED_ACCESS_KEY)"
@@ -47,21 +46,20 @@ echo "Creating the Container Instances..."
 
 COUNTER=1
 while [ $COUNTER -le $CONTAINER_COUNT ]; do
-  az container create --output json -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --image "$IMAGE" -e SCRIPT_URL="$WRK_SCRIPT_URL" TARGET_URL="$TARGET_URL" WRK_OPTIONS="$WRK_OPTIONS" WRK_HEADER="$WRK_HEADER" > /dev/null
+  az container create --output json -g $RESOURCE_GROUP --name $CONTAINER_PREFIX$COUNTER --image "$IMAGE" --restart-policy=OnFailure -e SCRIPT_URL="$WRK_SCRIPT_URL" TARGET_URL="$TARGET_URL" WRK_OPTIONS="$WRK_OPTIONS" WRK_HEADER="$WRK_HEADER" > /dev/null
   let COUNTER=COUNTER+1
 done
 
 echo "Sleeping for ${SLEEP_IN_SECONDS} seconds..."
 sleep $SLEEP_IN_SECONDS
 
-# for metrics, if you reused an existing event hub by exporting EXISTING_EVENT_HUB, please also export the corresponding EVENT_HUB_ID (format: /subscriptions/.../resourceGroups/.../providers/Microsoft.EventHub/namespaces/...)
-if [[ $EVENT_HUB_ID && "$PRINT_METRICS" != true && "$KEEP_EVENT_HUB" = true ]]; then
-  echo -e "Get metrics with the following command:\naz monitor metrics list --output json --resource $EVENT_HUB_ID --metric incomingMessages --interval P1D"
+EVENT_HUB_NAMESPACE_ID=$(az eventhubs namespace show -g $RESOURCE_GROUP -n $NAMESPACE_NAME --query "id" -o tsv)
+if [[ "$PRINT_METRICS" != true && "$KEEP_EVENT_HUB" = true ]]; then
+  echo -e "Get metrics with the following command:\naz monitor metrics list --output json --resource $EVENT_HUB_NAMESPACE_ID --metric incomingMessages --interval P1D"
 fi
 
-if [[ $EVENT_HUB_ID && "$PRINT_METRICS" = true ]]; then
-  METRICS_OUTPUT=$(az monitor metrics list --output json --resource $EVENT_HUB_ID --metric incomingMessages --interval P1D)
-  TOTAL_MESSAGES=$(echo $METRICS_OUTPUT | jq -r ".value[0].timeseries[0].data[0].total")
+if [[ "$PRINT_METRICS" = true ]]; then
+  TOTAL_MESSAGES=$(az monitor metrics list --resource $EVENT_HUB_NAMESPACE_ID --metric incomingMessages --interval P1D --query "value[0].timeseries[0].data[0].total" -o tsv)
   echo "The Event Hub currently has $TOTAL_MESSAGES incoming messages"
 fi
 
@@ -79,5 +77,5 @@ else
   echo "Removing the Event Hub..."
   # Ignore the return value of above command, because sometimes error value is
   # returned even when the resource deletion succeeds.
-  az resource delete --id $EVENT_HUB_ID || true
+  az resource delete --id $EVENT_HUB_NAMESPACE_ID || true
 fi

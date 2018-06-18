@@ -2,11 +2,11 @@ language: python
 python:
 - '2.7'
 before_install:
-- echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-- sudo apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893
+- AZ_REPO=$(lsb_release -cs)
+- echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+- curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 - sudo apt-get install -y apt-transport-https
 - sudo apt-get update && sudo apt-get install -y azure-cli
-- sudo apt-get install -y jq
 install:
 - az login --service-principal -u $AZ_USER --password $AZ_PASSWORD --tenant $AZ_TENANT > /dev/null 2>&1
 script:
