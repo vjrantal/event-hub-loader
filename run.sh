@@ -6,7 +6,7 @@ set -o pipefail
 KEEP_EVENT_HUB=${KEEP_EVENT_HUB:=false}
 PRINT_METRICS=${PRINT_METRICS:=true}
 
-EVENT_HUB_NAME=hubname
+EVENT_HUB_NAME=${EVENT_HUB_NAME:="hubname"}
 
 if [ $EXISTING_EVENT_HUB_NAMESPACE ]; then
   KEEP_EVENT_HUB=true

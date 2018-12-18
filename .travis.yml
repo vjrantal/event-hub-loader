@@ -3,14 +3,16 @@ python:
 - '2.7'
 before_install:
 - AZ_REPO=$(lsb_release -cs)
-- echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+- echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO
+  main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
 - curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 - sudo apt-get install -y apt-transport-https
 - sudo apt-get update && sudo apt-get install -y azure-cli
 install:
-- az login --service-principal -u $AZ_USER --password $AZ_PASSWORD --tenant $AZ_TENANT > /dev/null 2>&1
+- az login --service-principal -u $AZ_USER --password $AZ_PASSWORD --tenant $AZ_TENANT
+  > /dev/null 2>&1
 script:
-- ./run.sh
+- "./run.sh"
 env:
   global:
   - RESOURCE_GROUP=Travis
@@ -20,5 +22,5 @@ env:
   - SLEEP_IN_SECONDS=300
   - WRK_OPTIONS="-t 1 -d 600s -c 50"
   - secure: n/ACcJcW/Xn2L+WQQoOiztgRBn3jlFpZ1C63bSsD83ZHYS64ERdxgej0P6QQff7BLtrcYq0Dh54facWRyZIlvmqn8jOGhwWvvf9OsCx5Yv99lLtrX1CZjq03OFCd4tACNjIJ8rTrdceyTFhLDSO8i7yGmdAAEbx0CoYhcPGOWj6Xq74Jzj0ng1/I7BL5iO6YpIQQM0VtgYMQshDjVnQbiiDifATLzD7N9yuR71AT6Ct62mFMatC1RnH9/jr37W+7SmLlfLr4G7+G0CIY2+aYzYKSjKaSD926IK3vU1qYzI27C18jUarU34ldnpB2oovu8xB+QkJwYqHytDT23cXJHal48TZrs/xrOHzGs2SNRZOE4h27D8bZlQxnWB3LFl2cLaJeLiwnWt7Oh29X0fvo4kPINtj1zYThzWH/C3qKo90nHv3E3WkMZactEhc8yxOlA6N9GQ5fGeAWL4iRU/uEdUVleRRW1aJnjIHdr8sH/FX8VZTAoo52iuge33ZGD6JtVslFpGnUhQDZm8rgW1pe3bNV83JkeVzvZcnhARTWZfv5a0Lo8en8RG5H1fpzz3G4oLkS4vb+qLtJOHtS+YopQvSiDYuXO60juEJUZnoq3FKewndZ9gm+X1eoxBA4FY8+WdvvM0QSZlcPqpFs5P0s/yV6YjxWmqZe6790JRbDc5Y=
-  - secure: IGzZ/e6e+kv/6HBw0fKkrKBhjM70NC6iPO6GpunOSUaH7/S7VhnySkV3mIZkCUAkNFiiJYsCOQKPAISXnYtks5US20xDr/pxeuT5Xa77IR0jBBSKn4R+9D9RAkxBfBJMfoQSmEa8RdKVqBesEwrX3hNIsgBwrnHG1xaYzthhzlF3gkkGTT6NmEfcfu08QEv0NB1DDqMgf6CRmTu1VBOkNqWYInyTcXjviyV5uvr0LcavUR9krbmQ08hPIXrLZbNmqG0JaVXHoZ5pdujB9gH6QDZYA+xgC43ON6AnqkrQIPfRp3gBvElXCmYF6P/ZhhF6jGHHb45qd29nU2v7MFBo/kWdlrKaXyCgZUKkBOsVBdk/Q493VDqpXa3bFAwKgnSKjxbdinLNFHEi/zRwijUSTmqc7lpcMsTPplPw1lh5Wp9/56fqaT69GkatLyEivP298Wyc9xepnyT9dIxSJSc6k5CF53hags+TxH7t7DaNGAfGYpYmwmQk1u8sHnxexfH1mlzk+H9LXPSmby4ChXsFL3ENvS2AO134CfTL46oph2cCfHtzNlE0IxswW/YPdUppt5EVo2NGOgUyR0qsFsEjsgzoO9s1Bb/0gGV1i4M2lXG7p8yd0xryOVvALatPLr+3S+dpYepM411WdG0NhJG5nClXTlI3Y/cgJXET7wanDyg=
   - secure: IXHxFUp0xWrdPh843VyRYs9bj0b2VMaxdgIGQYhxfvtZdbAHZXOm+RISF2Du3ETRLD8JPUFTnIz3tK+JfnntILnYFSYBC/LQ7UfKK3nhE8ULbIGy0TFR4Jj5sVn+JX3mcV0U9xhFhg++VjyevV5G1JRwU0svA+4U9/2ZqJG2cEqWCD8R0QlSsm9v1x6nSlq8Y8SpQNDWkDnbbGMCtV8aOAs7Gz06kTZ3pZOoBTpQ51swQ1TBMKNQyhhz44E2KUsgNUJpozfcqgFe/7QaXobpCmCVaeOHWNKTGSpPrduXm9ehMgorbtmDc1ousM4y4gBDiIjAPqavNZWDQ69nnHXTG4vhoyqHLU6/I6ggnhs3ds3tvIpsjzgo+rPDaiibWWbVMJo36nOBGd3flxJOgc1oRMGfYw/7M3ZYYCRI6+fCZJ3/XkhZyOViTIKzRC9OiEpL25LVnirEj15Ia5CRcBgX2W5F/aBdRWZMAnYgPcCFDMi/hIRhNHPwH0l//b+C27iLDxey4TpxW2Th2jG/65C0NTaKXeBiSVygIudBxSIotOAVmEe4P5UFa607PlGEm5hHr5KIx1pgWs9d+YBfN0cqPiIo1/twpQ5EPtjucmP8nvM62V47yAlTyp7nLa1LZrCvcWCfFnZWv2iW6xT65GUl/DiKKGkqumTIUJnz0GaIujM=
+  - secure: LJzQOgDWILajvtpgdc5Lj2Wij8pZTh4aDmiBxdn5qKzCJkFoqSpy1aIMYFQRedUTUSysUqHxAUqi4fd6Yt3hjEXbTyhiQQGyyshzcBnID4NEzTAk9TDYp1Y2yOvW6tTjeHvX/+BKftJ/gziTDhScKwt9wmUCBxrviLtyW2Hmo6KN6cX+6wgf+q/VHE+G42ha2fDkSajimeEGNQ809suNWdEzO3/ABYeWbBvIu/t4Un64Wv20eaHNej1YHzxcKfsYi0gXiaVQKZqB/s8eKKLn0Jy5FjSIoEAkqq0xbHuPjx7xUoxY9TNqmysf0MHwwRzGkBaN17IdYyNQlO5t9yUU0sl+Yv/V6BtnEzmhO+2hbQHj3G9RXiMTdJkVL5cuOdlcTb5GpHzvTcFFl9qCJ3VAHhPcgJOQKQ7s13gCfSLMQx0QJdQkeqVwA058a8u3ib9u+JnKYvfrYUQtvdqs55PjiMbjdJLRpuv2b6xuXR1AxnNizVc9g31Sz3IY60YPqkPh38KzNJ1eIipmQBByfsPfAEF5wVKMxHbG1McPLrZaHiUmFbW6htmBoHlYEDa0RqaT9gdHEDGGoidelprcnBqsYjdCkKsiDh/P+kX4GP5M1RbmLe4FOObbFfJhngLujyPu0K20qqnfa0jmT82INqw/QCykZzF7CnNvHGWx1tu4q+I=
