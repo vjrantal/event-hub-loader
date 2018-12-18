@@ -38,6 +38,8 @@ export PARTITION_COUNT=8
 export SLEEP_IN_SECONDS=300
 export WRK_OPTIONS="-t 1 -d 600s -c 50"
 export KEEP_EVENT_HUB=true
+export EXISTING_EVENT_HUB_NAMESPACE=sample-namespace
+export EVENT_HUB_NAME=sample-hub
 export PRINT_METRICS=true
 ```
 
